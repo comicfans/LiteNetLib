@@ -17,7 +17,7 @@ namespace LiteNetLib
         private readonly NetBase.OnMessageReceived _onMessageReceived;
 
         private static readonly IPAddress MulticastAddressV6 = IPAddress.Parse(NetConstants.MulticastGroupIPv6);
-        private static readonly bool IPv6Support = Socket.OSSupportsIPv6;
+        private static readonly bool IPv6Support = false;//Socket.OSSupportsIPv6;
         private const int SocketReceivePollTime = 100000;
         private const int SocketSendPollTime = 5000;
 
@@ -109,40 +109,6 @@ namespace LiteNetLib
             _threadv4.IsBackground = true;
             _threadv4.Start(_udpSocketv4);
 
-            //Check IPv6 support
-            if (!IPv6Support)
-                return true;
-
-            //Use one port for two sockets
-            port = _localEndPoint.Port;
-
-            _udpSocketv6 = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp);
-            _udpSocketv6.Blocking = false;
-            _udpSocketv6.ReceiveBufferSize = NetConstants.SocketBufferSize;
-            _udpSocketv6.SendBufferSize = NetConstants.SocketBufferSize;
-
-            if (BindSocket(_udpSocketv6, new IPEndPoint(IPAddress.IPv6Any, port)))
-            {
-                _localEndPoint = new NetEndPoint((IPEndPoint)_udpSocketv6.LocalEndPoint);
-
-                try
-                {
-                    _udpSocketv6.SetSocketOption(
-                        SocketOptionLevel.IPv6, 
-                        SocketOptionName.AddMembership,
-                        new IPv6MulticastOption(MulticastAddressV6));
-                }
-                catch
-                {
-                    // Unity3d throws exception - ignored
-                }
-
-                _threadv6 = new Thread(ReceiveLogic);
-                _threadv6.Name = "SocketThreadv6(" + port + ")";
-                _threadv6.IsBackground = true;
-                _threadv6.Start(_udpSocketv6);
-            }
-
             return true;
         }
 
@@ -173,12 +139,6 @@ namespace LiteNetLib
                 int result = _udpSocketv4.SendTo(data, offset, size, SocketFlags.None, new IPEndPoint(IPAddress.Broadcast, port));
                 if (result <= 0)
                     return false;
-                if (IPv6Support)
-                {
-                    result = _udpSocketv6.SendTo(data, offset, size, SocketFlags.None, new IPEndPoint(MulticastAddressV6, port));
-                    if (result <= 0)
-                        return false;
-                }
             }
             catch (Exception ex)
             {
@@ -199,11 +159,7 @@ namespace LiteNetLib
                         return -1;
                     result = _udpSocketv4.SendTo(data, offset, size, SocketFlags.None, remoteEndPoint.EndPoint);
                 }
-                else if(IPv6Support)
                 {
-                    if (!_udpSocketv6.Poll(SocketSendPollTime, SelectMode.SelectWrite))
-                        return -1;
-                    result = _udpSocketv6.SendTo(data, offset, size, SocketFlags.None, remoteEndPoint.EndPoint);
                 }
 
                 NetUtils.DebugWrite(ConsoleColor.Blue, "[S]Send packet to {0}, result: {1}", remoteEndPoint.EndPoint, result);
