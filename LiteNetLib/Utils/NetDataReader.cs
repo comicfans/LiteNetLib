@@ -73,8 +73,7 @@ namespace LiteNetLib.Utils
         public NetEndPoint GetNetEndPoint()
         {
             string host = GetString(1000);
-            int port = GetInt();
-            return new NetEndPoint(host, port);
+            return new NetEndPoint(host);
         }
 
         public byte GetByte()

@@ -109,10 +109,10 @@ namespace LiteNetLib
         /// </summary>
         /// <param name="address">Server IP or hostname</param>
         /// <param name="port">Server Port</param>
-        public void Connect(string address, int port)
+        public void Connect(string address)
         {
             //Create target endpoint
-            NetEndPoint ep = new NetEndPoint(address, port);
+            NetEndPoint ep = new NetEndPoint(address);
             Connect(ep);
         }
 

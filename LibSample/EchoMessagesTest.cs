@@ -138,7 +138,7 @@ namespace LibSample
             _serverListener = new ServerListener();
 
             NetServer server = new NetServer(_serverListener, 2, "myapp1");
-            if (!server.Start(9050))
+            if (!server.Start())
             {
                 Console.WriteLine("Server start failed");
                 Console.ReadKey();
@@ -158,24 +158,16 @@ namespace LibSample
                 Console.WriteLine("Client1 start failed");
                 return;
             }
-            client1.Connect("127.0.0.1", 9050);
-
-            NetClient client2 = new NetClient(_clientListener, "myapp1");
-            //client2.SimulateLatency = true;
-            client2.SimulationMaxLatency = 1500;
-            client2.Start();
-            client2.Connect("::1", 9050);
+            client1.Connect(LiteNetLib.NetUtils.DetectHost().ToString());
 
             while (!Console.KeyAvailable)
             {
                 client1.PollEvents();
-                client2.PollEvents();
                 server.PollEvents();
                 Thread.Sleep(15);
             }
 
             client1.Stop();
-            client2.Stop();
             server.Stop();
             Console.ReadKey();
             Console.WriteLine("ServStats:\n BytesReceived: {0}\n PacketsReceived: {1}\n BytesSent: {2}\n PacketsSent: {3}", 
@@ -188,11 +180,6 @@ namespace LibSample
                 client1.PacketsReceived,
                 client1.BytesSent,
                 client1.PacketsSent);
-            Console.WriteLine("Client2Stats:\n BytesReceived: {0}\n PacketsReceived: {1}\n BytesSent: {2}\n PacketsSent: {3}",
-                client2.BytesReceived,
-                client2.PacketsReceived,
-                client2.BytesSent,
-                client2.PacketsSent);
             Console.WriteLine("Press any key to exit");
             Console.ReadKey();
         }

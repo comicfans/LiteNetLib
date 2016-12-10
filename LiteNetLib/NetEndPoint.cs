@@ -36,7 +36,7 @@ namespace LiteNetLib
             return EndPoint.GetHashCode();
         }
 
-        public NetEndPoint(string hostStr, int port)
+        public NetEndPoint(string hostStr)
         {
             IPAddress ipAddress;
             if (!IPAddress.TryParse(hostStr, out ipAddress))
@@ -61,7 +61,7 @@ namespace LiteNetLib
             {
                 throw new Exception("Invalid address: " + hostStr);
             }
-            EndPoint = new IPEndPoint(ipAddress, port);
+            EndPoint = new IPEndPoint(ipAddress, 0);
         }
 
         private IPAddress ResolveAddress(string hostStr, AddressFamily addressFamily)

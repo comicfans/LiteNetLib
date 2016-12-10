@@ -160,19 +160,12 @@ namespace LiteNetLib
             EnqueueEvent(evt);
         }
 
-        /// <summary>
-        /// Start logic thread and listening on available port
-        /// </summary>
-        public bool Start()
-        {
-            return Start(0);
-        }
 
         /// <summary>
         /// Start logic thread and listening on selected port
         /// </summary>
         /// <param name="port">port to listen</param>
-        public virtual bool Start(int port)
+        public virtual bool Start()
         {
             if (IsRunning)
             {
@@ -180,7 +173,7 @@ namespace LiteNetLib
             }
 
             _netEventsQueue.Clear();
-            if (!_socket.Bind(port))
+            if (!_socket.Bind())
                 return false;
 
             _logicThread.Start();
@@ -225,41 +218,10 @@ namespace LiteNetLib
             return SendRaw(packet, remoteEndPoint);
         }
 
-        public bool SendDiscoveryRequest(NetDataWriter writer, int port)
-        {
-            return SendDiscoveryRequest(writer.Data, 0, writer.Length, port);
-        }
+        
 
-        public bool SendDiscoveryRequest(byte[] data, int port)
-        {
-            return SendDiscoveryRequest(data, 0, data.Length, port);
-        }
+        
 
-        public bool SendDiscoveryRequest(byte[] data, int start, int length, int port)
-        {
-            if (!IsRunning)
-                return false;
-            var packet = NetPacket.CreateRawPacket(PacketProperty.DiscoveryRequest, data, start, length);
-            return _socket.SendBroadcast(packet, 0, packet.Length, port);
-        }
-
-        public bool SendDiscoveryResponse(NetDataWriter writer, NetEndPoint remoteEndPoint)
-        {
-            return SendDiscoveryResponse(writer.Data, 0, writer.Length, remoteEndPoint);
-        }
-
-        public bool SendDiscoveryResponse(byte[] data, NetEndPoint remoteEndPoint)
-        {
-            return SendDiscoveryResponse(data, 0, data.Length, remoteEndPoint);
-        }
-
-        public bool SendDiscoveryResponse(byte[] data, int start, int length, NetEndPoint remoteEndPoint)
-        {
-            if (!IsRunning)
-                return false;
-            var packet = NetPacket.CreateRawPacket(PacketProperty.DiscoveryResponse, data, start, length);
-            return SendRaw(packet, remoteEndPoint);
-        }
 
         internal bool SendRaw(byte[] message, NetEndPoint remoteEndPoint)
         {

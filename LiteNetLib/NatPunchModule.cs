@@ -129,7 +129,7 @@ namespace LiteNetLib
             NetDataWriter dw = new NetDataWriter();
             string networkIp = NetUtils.GetLocalIp(true);
             int networkPort = _netBase.LocalEndPoint.Port;
-            NetEndPoint localEndPoint = new NetEndPoint(networkIp, networkPort);
+            NetEndPoint localEndPoint = new NetEndPoint(networkIp);
             dw.Put(localEndPoint);
             dw.Put(additionalInfo, MaxTokenLength);
 

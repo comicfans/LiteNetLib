@@ -2,7 +2,9 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Collections;
 using System.Threading;
+using System.Net.NetworkInformation;
 
 namespace LiteNetLib
 {
@@ -51,7 +53,10 @@ namespace LiteNetLib
                 //Reading data
                 try
                 {
-                    result = socket.ReceiveFrom(receiveBuffer, 0, receiveBuffer.Length, SocketFlags.None, ref bufferEndPoint);
+                    byte[] rawpacket= new byte[NetConstants.PacketSizeLimit+Ipv4Header.Ipv4HeaderLength];
+                    int rawresult = socket.ReceiveFrom(rawpacket, 0, rawpacket.Length, SocketFlags.None, ref bufferEndPoint);
+                    result = rawresult - Ipv4Header.Ipv4HeaderLength;
+                    Array.Copy(rawpacket, Ipv4Header.Ipv4HeaderLength, receiveBuffer, 0, result);
                     if (!bufferNetEndPoint.EndPoint.Equals(bufferEndPoint))
                     {
                         bufferNetEndPoint = new NetEndPoint((IPEndPoint)bufferEndPoint);
@@ -79,25 +84,33 @@ namespace LiteNetLib
             }
         }
 
-        public bool Bind(int port)
+        public bool Bind()
         {
-            _udpSocketv4 = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            _udpSocketv4 = new Socket(AddressFamily.InterNetwork, SocketType.Raw, ProtocolType.Icmp);
             _udpSocketv4.Blocking = false;
             _udpSocketv4.ReceiveBufferSize = NetConstants.SocketBufferSize;
             _udpSocketv4.SendBufferSize = NetConstants.SocketBufferSize;
             _udpSocketv4.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.IpTimeToLive, NetConstants.SocketTTL);
             _udpSocketv4.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.DontFragment, true);
+            _udpSocketv4.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.HeaderIncluded, 1);
+
+            IPAddress myaddr = NetUtils.DetectHost();
+            
+            if(myaddr == null)
+            {
+                return false;
+            }
+
+            if (!BindSocket(_udpSocketv4, new IPEndPoint(myaddr, 0)))
+            {
+                return false;
+            }
 
             try
             {
-                _udpSocketv4.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Broadcast, 1);
+                _udpSocketv4.IOControl(IOControlCode.ReceiveAll, new byte[] { 1, 0, 0, 0 }, new byte[] { 1, 0, 0, 0 });
             }
-            catch (SocketException e)
-            {
-                NetUtils.DebugWriteError("Broadcast error: {0}", e.ToString());
-            }
-
-            if (!BindSocket(_udpSocketv4, new IPEndPoint(IPAddress.Any, port)))
+            catch (SocketException)
             {
                 return false;
             }
@@ -105,7 +118,7 @@ namespace LiteNetLib
 
             _running = true;
             _threadv4 = new Thread(ReceiveLogic);
-            _threadv4.Name = "SocketThreadv4(" + port + ")";
+            _threadv4.Name = "SocketThreadv4";
             _threadv4.IsBackground = true;
             _threadv4.Start(_udpSocketv4);
 
@@ -132,20 +145,19 @@ namespace LiteNetLib
             return true;
         }
 
-        public bool SendBroadcast(byte[] data, int offset, int size, int port)
+        byte[] AppendIpHeader(byte[] data,int offset,int size,IPAddress thatIp)
         {
-            try
-            {
-                int result = _udpSocketv4.SendTo(data, offset, size, SocketFlags.None, new IPEndPoint(IPAddress.Broadcast, port));
-                if (result <= 0)
-                    return false;
-            }
-            catch (Exception ex)
-            {
-                NetUtils.DebugWriteError("[S][MCAST]" + ex);
-                return false;
-            }
-            return true;
+            Ipv4Header packet = new Ipv4Header();
+            packet.Version = 4;
+            packet.Protocol = (byte)1;
+            packet.Ttl = NetConstants.SocketTTL;
+            packet.Offset = 0;
+            packet.Length = (byte)Ipv4Header.Ipv4HeaderLength;
+            packet.TotalLength = (ushort)(Ipv4Header.Ipv4HeaderLength + size);
+            packet.SourceAddress = _localEndPoint.EndPoint.Address;
+            packet.DestinationAddress = thatIp;
+            byte[] ret = packet.BuildPacket(data, offset, size);
+            return ret;
         }
 
         public int SendTo(byte[] data, int offset, int size, NetEndPoint remoteEndPoint, ref int errorCode)
@@ -157,9 +169,11 @@ namespace LiteNetLib
                 {
                     if (!_udpSocketv4.Poll(SocketSendPollTime, SelectMode.SelectWrite))
                         return -1;
-                    result = _udpSocketv4.SendTo(data, offset, size, SocketFlags.None, remoteEndPoint.EndPoint);
-                }
+                    byte[] appended = AppendIpHeader(data, offset, size, remoteEndPoint.EndPoint.Address);
+                    result = _udpSocketv4.SendTo(appended, new IPEndPoint(remoteEndPoint.EndPoint.Address,0))-Ipv4Header.Ipv4HeaderLength;
+                }else
                 {
+                    return -1;
                 }
 
                 NetUtils.DebugWrite(ConsoleColor.Blue, "[S]Send packet to {0}, result: {1}", remoteEndPoint.EndPoint, result);

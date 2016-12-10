@@ -12,9 +12,9 @@ namespace LiteNetLib
 
         public NtpSyncModule(string ntpServer)
         {
-            _ntpEndPoint = new NetEndPoint(ntpServer, 123);
+            _ntpEndPoint = new NetEndPoint(ntpServer);
             _socket = new NetSocket(OnMessageReceived);
-            _socket.Bind(0);
+            _socket.Bind();
             SyncedTime = null;
         }
 
