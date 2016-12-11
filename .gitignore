@@ -13,3 +13,10 @@ LiteNetLibSampleUnity.CSharp.csproj
 LiteNetLibSampleUnity.sln
 LiteNetLibSampleUnity/Temp
 LiteNetLibSampleUnity/Library
+*.dll
+*.pdb
+*.exe
+*.sw[op]
+*.confi
+*.manifest
+**/Debug
