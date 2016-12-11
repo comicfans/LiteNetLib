@@ -12,7 +12,7 @@ namespace LiteNetLib
 
         internal readonly IPEndPoint EndPoint;
 
-        internal NetEndPoint(IPEndPoint ipEndPoint)
+        public NetEndPoint(IPEndPoint ipEndPoint)
         {
             EndPoint = ipEndPoint;
         }

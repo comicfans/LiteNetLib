@@ -133,6 +133,16 @@ namespace LiteNetLib
 
         private static readonly object DebugLogLock = new object();
 
+            
+        static ConsoleColor[] LOG_COLORS={ConsoleColor.Green,ConsoleColor.Yellow,ConsoleColor.Red};
+        public static void Log(int level, string str, params object[] args){
+            if (level < 1)
+            {
+                return;
+            }
+            DebugWriteLogic(LOG_COLORS[Math.Max(0,Math.Min(level,2))],str,args);
+        }
+
         private static void DebugWriteLogic(ConsoleColor color, string str, params object[] args)
         {
             lock (DebugLogLock)
