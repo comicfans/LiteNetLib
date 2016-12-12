@@ -87,6 +87,11 @@ namespace PortMap
                     _wl.T("before take");
                     var data= _toTarget.Take();
                     _wl.T("taken and send to socket");
+                    if (data == null)
+                    {
+                        //stopped
+                        break;
+                    }
                     _socket.Send(data.Data,0,data.Size,SocketFlags.None);
                 }
             }
@@ -103,7 +108,9 @@ namespace PortMap
 
             _l.I("call stop");
             _running = false;
+            _socket.Disconnect(false);
             _socket.Close();
+            _toTarget.Add(null);
             _readThread.Join();
             _writeThread.Join();
             OnDisconnect(this,null);
