@@ -69,7 +69,7 @@ namespace PortMap
                     }
                 }
 
-                Thread.Sleep(50);
+                Thread.Sleep(15);
             }
         }
 

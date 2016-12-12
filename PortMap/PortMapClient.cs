@@ -52,7 +52,6 @@ namespace PortMap
                 _running = true;
 
                 _netClient=new NetClient(this,"myapp1");
-                _netClient.SimulationMaxLatency= 1500;
                 _netClient.MergeEnabled = true;
                 if (!_netClient.Start()){
                     _l.E("client start failed!");
@@ -88,7 +87,7 @@ namespace PortMap
                         _l.T("send to peer {0},{1} bytes",_netClient.Peer.EndPoint, fromClient.Size);
                         _netClient.Peer.Send(fromClient.Data, 0, fromClient.Size,SendOptions.ReliableOrdered);
                     }
-                    Thread.Sleep(50);
+                    Thread.Sleep(15);
                 }
 
                 _targetThread.Stop();
