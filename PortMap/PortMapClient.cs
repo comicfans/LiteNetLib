@@ -14,9 +14,10 @@ namespace PortMap
         private Socket _listenSocket;
 
         private static SimpleLogger _l = new SimpleLogger("client");
-        public PortMapClient(IPEndPoint listenEndPoint){
+        public PortMapClient(IPEndPoint listenEndPoint,IPAddress serverAddr){
 
 
+            _serverAddr = serverAddr;
             _eventLoopThread =new Thread(EventLoop);
             _listenSocket=new Socket(AddressFamily.InterNetwork,SocketType.Stream,ProtocolType.Tcp);
             _listenSocket.Bind(listenEndPoint);
@@ -26,6 +27,7 @@ namespace PortMap
 
         private bool _running=true;
 
+        private IPAddress _serverAddr;
 
         private Thread _eventLoopThread;
         public void Start(){
@@ -58,7 +60,7 @@ namespace PortMap
                     continue;
                 }
 
-                _netClient.Connect(new NetEndPoint(new IPEndPoint(NetUtils.DetectHost(),0)));
+                _netClient.Connect(new NetEndPoint(new IPEndPoint(_serverAddr,0)));
 
                 DataCallback func=pair=> {
                     _fromClient.Add(pair);
