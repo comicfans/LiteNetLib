@@ -87,6 +87,26 @@ namespace PortMap
 
             queued.Add(datapair);
         }
+
+
+        private void DisconnectPeer(NetPeer peer)
+        {
+            _server.DisconnectPeer(peer);
+
+            BlockingCollection<DataPair> nouse;
+            //remove queue
+            _peerData.TryRemove(peer, out nouse);
+
+            TargetSocketThread thread;
+            var removed = _peerMap.TryRemove(peer, out thread);
+            if (!removed)
+            {
+                //thread not create
+                return;
+            }
+            thread.Stop();
+        }
+
         public void OnPeerConnected(NetPeer peer)
         {
 
@@ -105,7 +125,10 @@ namespace PortMap
 
                 var newThread = new TargetSocketThread(socket, func);
                 newThread.Name = "Server";
-                newThread.OnDisconnect += (sender, nouse) => { _server.DisconnectPeer(peer); };
+                newThread.OnDisconnect += (sender, nouse) => {
+                    DisconnectPeer(peer);
+                };
+
                 bool shouldTrue=_peerMap.TryAdd(peer, newThread);
 
                 _l.D("add id {0} to peer map ", peer.Id);
@@ -124,17 +147,17 @@ namespace PortMap
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectReason disconnectReason, int socketErrorCode)
         {
-            _l.W("[Server] Peer disconnected: {0}, reason: {1}", new object[] { peer.EndPoint, disconnectReason });
 
-            TargetSocketThread thread;
-            var removed = _peerMap.TryRemove(peer, out thread);
-            if (!removed)
+            if (peer == null)
             {
-                //thread not create
-                return;
+                _l.W("null peer disconnect ? {0}", disconnectReason);
             }
-            _l.I("stop thread", peer.EndPoint, disconnectReason );
-            thread.Stop();
+
+            _l.W("Peer disconnected: {0}, reason: {1}", new object[] { peer.EndPoint, disconnectReason });
+
+            DisconnectPeer(peer);
+
+            
         }
 
         public void OnNetworkError(NetEndPoint endPoint, int socketErrorCode)
