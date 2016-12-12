@@ -45,7 +45,7 @@ namespace PortMap
 
         private BlockingCollection<DataPair> _fromClient = new BlockingCollection<DataPair>();
 
-        private void EventLoop(){
+        public void EventLoop(){
 
             while(_clientRunning){
                 var clientSocket=_listenSocket.Accept();

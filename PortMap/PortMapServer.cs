@@ -49,7 +49,7 @@ namespace PortMap
             _eventLoopThread.Join();
         }
 
-        private void EventLoop(){
+        public void EventLoop(){
             _l.I("start event loop...");
             while(_serverRunning){
                 _l.T("poll server events...");
