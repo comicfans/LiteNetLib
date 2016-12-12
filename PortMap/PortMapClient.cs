@@ -72,9 +72,8 @@ namespace PortMap
                 _targetThread.Start();
 
                 while(_running){
-                    _l.I("before poll");
+                    _l.T("poll events");
                     _netClient.PollEvents();
-                    _l.I("end poll");
 
                     DataPair fromClient;
 
@@ -84,9 +83,8 @@ namespace PortMap
                         {
                             continue;
                         }
-                        _l.I("begin send to netpeer");
+                        _l.T("send to peer {0},{1} bytes",_netClient.Peer.EndPoint, fromClient.Size);
                         _netClient.Peer.Send(fromClient.Data, 0, fromClient.Size,SendOptions.ReliableOrdered);
-                        _l.T("end send to netpeer");
                     }
                     Thread.Sleep(50);
                 }
@@ -102,7 +100,7 @@ namespace PortMap
 
         public void OnPeerConnected(NetPeer peer)
         {
-            _l.I("[Client] connected to: {0}:{1}", peer.EndPoint.Host, peer.EndPoint.Port);
+            _l.I("connected to: {0}", peer.EndPoint);
         }
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectReason disconnectReason, int socketErrorCode)
@@ -113,7 +111,7 @@ namespace PortMap
 
         public void OnNetworkError(NetEndPoint endPoint, int socketErrorCode)
         {
-            _l.E("[Client] error! {}", socketErrorCode);
+            _l.E("network error to {0}:{1}", endPoint,socketErrorCode);
         }
 
         public void OnNetworkReceive(NetPeer peer, NetDataReader reader)
@@ -123,7 +121,7 @@ namespace PortMap
                 _running = false;
                 return;
             }
-            _l.T("[client] receive {0} bytes", reader.Data.Length);
+            _l.T("receive {0} bytes from {1}", reader.Data.Length,peer.EndPoint);
             byte[] copy=new byte[reader.Data.Length];
             Array.Copy(reader.Data, copy, copy.Length);
             _targetThread.AppendToTarget(new DataPair(copy));
@@ -131,7 +129,7 @@ namespace PortMap
 
         public void OnNetworkReceiveUnconnected(NetEndPoint remoteEndPoint, NetDataReader reader, UnconnectedMessageType messageType)
         {
-            _l.I("receive unconnect {}", messageType);
+            _l.I("receive {0} unconnect {1}", remoteEndPoint,messageType);
             _running = false;
         }
 

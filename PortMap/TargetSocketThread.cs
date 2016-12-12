@@ -73,7 +73,7 @@ namespace PortMap
                 }
             }
             catch(SocketException e){
-                _rl.E("socket exception {0}",e);
+                _rl.E("socket exception {0},call disconnect",e);
                 OnDisconnect(this,null);
             }
         }
@@ -84,20 +84,19 @@ namespace PortMap
             {
                 while (_running)
                 {
-                    _wl.T("before take");
                     var data= _toTarget.Take();
-                    _wl.T("taken and send to socket");
                     if (data == null)
                     {
                         //stopped
                         break;
                     }
+                    _wl.D("taken {0} and send to socket",data.Size);
                     _socket.Send(data.Data,0,data.Size,SocketFlags.None);
                 }
             }
             catch(SocketException e)
             {
-                _wl.E("socket exception: {0}", e);
+                _wl.E("socket exception: {0},call disconnect", e);
                 OnDisconnect(this,null);
             }
         }
@@ -106,13 +105,15 @@ namespace PortMap
         public void Stop()
         {
 
-            _l.I("call stop");
             _running = false;
+            _l.D("call stop,disconnect/close socket");
             _socket.Disconnect(false);
             _socket.Close();
+            _l.D("socket closed, wait thread join");
             _toTarget.Add(null);
             _readThread.Join();
             _writeThread.Join();
+            _l.D("thread joined");
             OnDisconnect(this,null);
         }
     }

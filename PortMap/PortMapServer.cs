@@ -62,12 +62,10 @@ namespace PortMap
                     DataPair pair;
 
 
-                    _l.D("sending queue for {0}",en.Current.Key);
                     while (en.Current.Value.TryTake(out pair))
                     {
-                        _l.T("before send for {0}",en.Current.Key);
+                        _l.D("send to {0}:{1} bytes",en.Current.Key,pair.Size);
                         en.Current.Key.Send(pair.Data, 0, pair.Size, SendOptions.ReliableOrdered);
-                        _l.T("end send for {0}",en.Current.Key);
                     }
                 }
 
@@ -92,7 +90,7 @@ namespace PortMap
         public void OnPeerConnected(NetPeer peer)
         {
 
-            _l.I("[Server] Peer connected: {0}", new object[] { peer.EndPoint });
+            _l.I("Peer connected: {0}", new object[] { peer.EndPoint });
 
 
             DataCallback func= datapair => { OnSocketRead(peer, datapair); };
@@ -103,7 +101,7 @@ namespace PortMap
                 socket.Blocking = true;
 
                 socket.Connect(_targetEndPoint);
-                _l.I("[Server] connect to {0}", new object[] { _targetEndPoint });
+                _l.D("connect to {0}", new object[] { _targetEndPoint });
 
                 var newThread = new TargetSocketThread(socket, func);
                 newThread.Name = "Server";
@@ -141,14 +139,14 @@ namespace PortMap
 
         public void OnNetworkError(NetEndPoint endPoint, int socketErrorCode)
         {
-            _l.E("[Server] error: ");
+            _l.E("error: ");
         }
 
         public void OnNetworkReceive(NetPeer peer, NetDataReader reader)
         {
             TargetSocketThread thread;
 
-            _l.D("[Server] receive {0} bytes", reader.Data.Length);
+            _l.D("{0} receive {1} bytes", peer,reader.Data.Length);
 
             _peerMap.TryGetValue(peer, out thread);
 
@@ -162,7 +160,7 @@ namespace PortMap
 
         public void OnNetworkReceiveUnconnected(NetEndPoint remoteEndPoint, NetDataReader reader, UnconnectedMessageType messageType)
         {
-            _l.I("[Server] ReceiveUnconnected: {0}",messageType);
+            _l.I("ReceiveUnconnected: {0}",messageType);
         }
 
         public void OnNetworkLatencyUpdate(NetPeer peer, int latency)
