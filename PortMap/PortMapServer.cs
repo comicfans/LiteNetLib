@@ -75,16 +75,27 @@ namespace PortMap
             }
         }
 
-        BlockingCollection<DataPair> _fromServer = new BlockingCollection<DataPair>();
+        private void OnSocketRead(NetPeer peer,DataPair datapair)
+        {
+            BlockingCollection<DataPair> queued;
+
+            bool has=_peerData.TryGetValue(peer, out queued);
+
+            if (!has)
+            {
+                queued = new BlockingCollection<DataPair>();
+                _peerData.TryAdd(peer, queued);
+            }
+
+            queued.Add(datapair);
+        }
         public void OnPeerConnected(NetPeer peer)
         {
 
             _l.I("[Server] Peer connected: {0}", new object[] { peer.EndPoint });
 
-            DataCallback func = (DataPair pair) =>
-            {
-                _fromServer.Add(pair);
-            };
+
+            DataCallback func= datapair => { OnSocketRead(peer, datapair); };
 
             try
             {
