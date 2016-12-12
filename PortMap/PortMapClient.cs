@@ -107,7 +107,12 @@ namespace PortMap
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectReason disconnectReason, int socketErrorCode)
         {
-            _l.W("[Client] peer to server disconnect");
+            if (peer == null)
+            {
+                _l.W("null peer disconnect ?reason {0}",disconnectReason);
+                return;
+            }
+            _l.W("peer to server {0} disconnect,reason {1}",peer.EndPoint,disconnectReason);
             _running = false;
         }
 
