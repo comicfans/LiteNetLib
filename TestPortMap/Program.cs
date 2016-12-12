@@ -10,9 +10,9 @@ namespace TestPortMap
         static void Main(string[] args)
         {
 
-            PortMapServer server = new PortMapServer(new System.Net.IPEndPoint(NetUtils.DetectHost(), 8899));
+            PortMapServer server = new PortMapServer(new System.Net.IPEndPoint(NetUtils.DetectHost(), 3389));
 
-            PortMapClient client = new PortMapClient(new System.Net.IPEndPoint(NetUtils.DetectHost(), 8888));
+            PortMapClient client = new PortMapClient(new System.Net.IPEndPoint(NetUtils.DetectHost(), 3388),NetUtils.DetectHost());
 
             server.Start();
             client.Start();
